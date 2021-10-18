@@ -1,21 +1,9 @@
 import numpy as np
 
 class DownstreamSector():
-    """An array with downstream agents
-        
-        -- attributes
-        A : net worth
-        Y : production
-        N : number of workers
-        Q : amount of requested intermediate goods
-        W : wage bill
-        u : price of final good
-        B : demand of credit
-        l : leverage ratio
-        rb: interest rate from the bank
-        """
+    """An array with downstream agents."""
 
-    def __init__(self, n_agents=500, phi=1.2, beta=0.8, delta_d=0.5, gamma=0.5, w_d=1, sigma=0.1, theta=0.5):
+    def __init__(self, n_agents=500, phi=1.2, beta=0.8, delta_d=0.5, gamma=0.5, w_d=1, sigma=0.1, theta=0.05):
         
         # Raise an error if variables are not integers or float
         if not all([any([isinstance(variable,type_) for type_ in [int,float]])\
@@ -33,6 +21,18 @@ class DownstreamSector():
         self.w = w_d
         self.sigma = sigma
         self.theta = theta
+        
+        self.A_agg = []
+        self.Y_agg = []
+        self.N_agg = []
+        self.Q_agg = []
+        self.W_agg = []
+        self.u_agg = []
+        self.B_agg = []
+        self.l_agg = []
+        self.rb_agg = []
+        self.profit_agg = []
+        self.is_bankrupt_agg = []
         
     def compute_firm_features(self):
         """Generate the attributes 'Y' (production), 'N' (number of workers), 
@@ -98,3 +98,18 @@ class DownstreamSector():
         
         self.A += self.profit                                       # A = A + profit
         self.is_bankrupt = self.A <= 0.0001                         # A firm is bankrupt if the updated net worth is less than 0.0001
+        
+    def append_aggregate_variables(self):
+        """Append the aggregate variables"""
+        
+        self.A_agg.append(np.sum(self.A))
+        self.Y_agg.append(np.sum(self.Y))
+        self.N_agg.append(np.sum(self.N))
+        self.Q_agg.append(np.sum(self.Q))
+        self.W_agg.append(np.sum(self.W))
+        self.u_agg.append(np.sum(self.u))
+        self.B_agg.append(np.sum(self.B))
+        self.l_agg.append(np.sum(self.l))
+        self.rb_agg.append(np.sum(self.rb))
+        self.profit_agg.append(np.sum(self.profit))
+        self.is_bankrupt_agg.append(np.sum(self.is_bankrupt))
