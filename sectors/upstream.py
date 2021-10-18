@@ -1,26 +1,14 @@
 import numpy as np
 
 class UpstreamSector():
-    """An array with upstream agents
-        
-        -- attributes
-        A : net worth
-        Y : production
-        N : number of workers
-        Q : amount of requested intermediate goods
-        W : wage bill
-        u : price of intermediate good
-        B : demand of credit
-        l : leverage ratio
-        rb: interest rate from the bank
-        """
+    """An array with upstream agents."""
 
-    def __init__(self, n_agents=250, alpha = 0.1, delta_u=0.5, w_u=1, sigma=0.1, theta=0.5):
+    def __init__(self, n_agents=250, alpha=0.1, delta_u=1, w_u=1, sigma=0.1, theta=0.05):
         
         # Raise an error if variables are not integers or float
         if not all([any([isinstance(variable,type_) for type_ in [int,float]])\
                     for variable in [alpha, delta_u, w_u, sigma, theta]]):
-            raise TypeError("The arguments phi, delta_d, gamma, w_u, sigma and theta must be of type int or float")
+            raise TypeError("The arguments alpha, delta_u, gamma, w_u, sigma and theta must be of type int or float")
         if not isinstance(n_agents,int):
             raise TypeError("The argument n must be of type int")
         
@@ -31,6 +19,18 @@ class UpstreamSector():
         self.w = w_u
         self.sigma = sigma
         self.theta = theta
+        
+        self.A_agg = []
+        self.N_agg = []
+        self.Q_agg = []
+        self.W_agg = []
+        self.u_agg = []
+        self.B_agg = []
+        self.l_agg = []
+        self.rb_agg = []
+        self.profit_agg = []
+        self.bad_debt_agg = []
+        self.is_bankrupt_agg = []
         
     def compute_firm_features(self, D_requested_intermediate_goods = None, DU_connection = None):
         """Generate the attributes 'Y' (production), 'N' (number of workers), 
@@ -91,7 +91,7 @@ class UpstreamSector():
                          , 0)                                                 # rb = sigma * Ab^(-sigma) + theta * l^theta
         self.rb = np.where(self.rb < 0.001, 0.001, self.rb)                   # rb = 0.001 if rb < 0.001
 
-    def compute_profit_and_bad_debt(self, is_bankrupt_D = None, DU_connection = None, D_requested_intermediate_goods = None, ):
+    def compute_profit_and_bad_debt(self, is_bankrupt_D = None, DU_connection = None, D_requested_intermediate_goods = None):
         """Generate the "profit" and "bad_debt" attributes.
         
         Args:
@@ -116,7 +116,7 @@ class UpstreamSector():
         # Define an array with a number of zeros equal to the number of upstream firms.
         self.bad_debt = np.zeros(self.n_agents)
         # At each array's entry (upstream firm), sum the total amount of intermediate goods requested 
-        # by the downstream firms that are bankrupt times the total price (principal + interest rate).
+        # by the downstream firms that are bankrupt, times the total price (principal + interest rate).
         np.add.at(self.bad_debt,DU_connection,np.where(is_bankrupt_D, self.u[DU_connection] * D_requested_intermediate_goods, 0))
         
         self.profit= self.u * self.Q - self.rb * self.B - self.W
@@ -126,3 +126,17 @@ class UpstreamSector():
             and 'False' if not.""" 
         self.A += self.profit - self.bad_debt                                      
         self.is_bankrupt = self.A <= 0.0001                         # A firm is bankrupt if the updated net worth is less than 0.0001
+    
+    def append_aggregate_variables(self):
+        """Append the aggregate variables"""
+        self.A_agg.append(np.sum(self.A))
+        self.N_agg.append(np.sum(self.N))
+        self.Q_agg.append(np.sum(self.Q))
+        self.W_agg.append(np.sum(self.W))
+        self.u_agg.append(np.sum(self.u))
+        self.B_agg.append(np.sum(self.B))
+        self.l_agg.append(np.sum(self.l))
+        self.rb_agg.append(np.sum(self.rb))
+        self.profit_agg.append(np.sum(self.profit))
+        self.bad_debt_agg.append(np.sum(self.bad_debt))
+        self.is_bankrupt_agg.append(np.sum(self.is_bankrupt))
